@@ -1,6 +1,9 @@
 <?php
 // Dùng session mặc định
+ini_set("session.save_handler", "redis");
+ini_set("session.save_path", "tcp://myredis:6379"); // dùng đúng tên container Redis: myredis
 session_start();
+
 
 require_once 'models/UserModel.php';
 $userModel = new UserModel();
