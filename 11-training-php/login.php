@@ -1,9 +1,18 @@
 <?php
-// Dùng session mặc định
-ini_set("session.save_handler", "redis");
-ini_set("session.save_path", "tcp://myredis:6379"); // dùng đúng tên container Redis: myredis
-session_start();
+require 'vendor/autoload.php'; // Predis
 
+// Kết nối Redis cho queue
+$redis = new Predis\Client([
+    'scheme' => 'tcp',
+    'host'   => 'myredis',
+    'port'   => 6379,
+]);
+
+// Dùng session Redis
+ini_set("session.save_handler", "redis");
+ini_set("session.save_path", "tcp://myredis:6379");
+ini_set("session.gc_maxlifetime", 3600);
+session_start();
 
 require_once 'models/UserModel.php';
 $userModel = new UserModel();
@@ -14,18 +23,29 @@ if (!empty($_POST['submit'])) {
         'password' => $_POST['password']
     ];
     $user = NULL;
+
     if ($user = $userModel->auth($users['username'], $users['password'])) {
-        //Login successful
+        // Login thành công
         $_SESSION['id'] = $user[0]['id'];
         $_SESSION['message'] = 'Login successful';
+
+        // Thêm thông tin user vào Redis queue để dễ debug
+        $job = [
+            'user_id' => $user[0]['id'],
+            'username' => $user[0]['name'],
+            'email' => $user[0]['email'],
+            'login_time' => date('Y-m-d H:i:s')
+        ];
+        $redis->lpush('user_login_queue', json_encode($job));
+
         header('location: list_users.php');
         exit;
     } else {
-        //Login failed
         $_SESSION['message'] = 'Login failed';
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
