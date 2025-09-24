@@ -2,12 +2,14 @@
 require_once 'models/UserModel.php';
 $userModel = new UserModel();
 
-$user = NULL; //Add new user
-$id = NULL;
-
+// Nhận danh sách id, phân tách bằng dấu phẩy
 if (!empty($_GET['id'])) {
-    $id = $_GET['id'];
-    $userModel->deleteUserById($id);//Delete existing user
+    $ids = explode(',', $_GET['id']); 
+    foreach ($ids as $id) {
+        $userModel->deleteUserById($id);
+    }
 }
+
 header('location: list_users.php');
+exit;
 ?>

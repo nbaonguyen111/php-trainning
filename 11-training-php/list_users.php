@@ -31,8 +31,8 @@ $users = $userModel->getUsers($params);
                     <tr>
                         <th scope="col">ID</th>
                         <th scope="col">Username</th>
-                        <th scope="col">Fullname</th>
-                        <th scope="col">Type</th>
+                        <!-- <th scope="col">Fullname</th>
+                        <th scope="col">Type</th> -->
                         <th scope="col">Actions</th>
                     </tr>
                 </thead>
@@ -43,12 +43,12 @@ $users = $userModel->getUsers($params);
                             <td>
                                 <?php echo $user['name']?>
                             </td>
-                            <td>
+                            <!-- <td>
                                 <?php echo $user['fullname']?>
                             </td>
                             <td>
                                 <?php echo $user['type']?>
-                            </td>
+                            </td> -->
                             <td>
                                 <a href="form_user.php?id=<?php echo $user['id'] ?>">
                                     <i class="fa fa-pencil-square-o" aria-hidden="true" title="Update"></i>
