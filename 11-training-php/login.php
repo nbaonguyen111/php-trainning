@@ -12,12 +12,18 @@ if (!empty($_POST['submit'])) {
     ];
     $user = NULL;
     if ($user = $userModel->auth($users['username'], $users['password'])) {
-        //Login successful
-        $_SESSION['id'] = $user[0]['id'];
+        // Login successful
+        $_SESSION['user'] = [
+            'id' => $user[0]['id'],
+            'username' => $user[0]['name'],   // cột name trong DB
+            'fullname' => $user[0]['fullname'] ?? '',
+            'type' => $user[0]['type'] ?? ''
+        ];
         $_SESSION['message'] = 'Login successful';
         header('location: list_users.php');
         exit;
-    } else {
+    }
+     else {
         //Login failed
         $_SESSION['message'] = 'Login failed';
     }
