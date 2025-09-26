@@ -11,6 +11,7 @@ if (!empty($_GET['keyword'])) {
 }
 
 $users = $userModel->getUsers($params);
+// $test =$userModel->getTest($params);
 ?>
 <!DOCTYPE html>
 <html>
@@ -62,6 +63,21 @@ $users = $userModel->getUsers($params);
                             </td>
                         </tr>
                     <?php } ?>
+                    <!-- <?php foreach ($test as $test) {?>
+                        <tr>
+                            <th scope="row"><?php echo $test['ID']?></th>
+                            <td>
+                                <?php echo $test['name']?>
+                            </td>
+                            <td>
+                                <?php echo $test['fullname']?>
+                            </td>
+                            <td>
+                                <?php echo $test['type']?>
+                            </td>
+                            
+                        </tr>
+                    <?php } ?> -->
                 </tbody>
             </table>
         <?php }else { ?>
