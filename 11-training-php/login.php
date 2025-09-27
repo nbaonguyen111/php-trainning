@@ -97,12 +97,13 @@ if (!empty($_POST['submit'])) {
 
                     <div class="margin-bottom-25 input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
-                        <input id="login-username" type="text" class="form-control" name="username" value="" placeholder="username or email" required>
+                        <!-- thêm maxlength để giới hạn kích thước input -->
+                        <input id="login-username" type="text" class="form-control" name="username" value="" placeholder="username or email" required maxlength="100">
                     </div>
 
                     <div class="margin-bottom-25 input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
-                        <input id="login-password" type="password" class="form-control" name="password" placeholder="password" required>
+                        <input id="login-password" type="password" class="form-control" name="password" placeholder="password" required maxlength="128">
                     </div>
 
                     <div class="margin-bottom-25">
@@ -133,25 +134,54 @@ if (!empty($_POST['submit'])) {
 </div>
 
 <script>
-// Lưu username vào localStorage trước khi submit
+/**
+ * escapeHtml: convert < > & " ' to HTML entities.
+ * Useful if you ever need to place text into innerHTML (prefer avoid).
+ */
+function escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return s.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+}
+
+/**
+ * Save username to localStorage BEFORE submit.
+ * We keep storing the raw username to preserve UX, but everywhere we render we MUST use safe APIs:
+ * - set input.value (safe)
+ * - use element.textContent (safe)
+ * NEVER use innerHTML with user-controlled data.
+ */
 document.getElementById("login-form").addEventListener("submit", function(e) {
-    let username = document.getElementById("login-username").value;
+    let username = document.getElementById("login-username").value || '';
+    // trim and limit length client-side
+    username = username.trim().slice(0, 200);
     if (document.getElementById("remember").checked) {
-        localStorage.setItem("username", username);
+        try {
+            localStorage.setItem("username", username);
+        } catch (ex) {
+            // storage full / disabled — ignore silently
+        }
     } else {
         localStorage.removeItem("username");
     }
 });
 
-// Tự động điền lại nếu có lưu
-window.onload = function() {
-    let savedUser = localStorage.getItem("username");
-    if (savedUser) {
-        document.getElementById("login-username").value = savedUser;
-        document.getElementById("remember").checked = true;
+// Auto-fill username from localStorage in a safe way (assign to input.value — not innerHTML)
+window.addEventListener('DOMContentLoaded', function() {
+    try {
+        let savedUser = localStorage.getItem("username");
+        if (savedUser) {
+            // assign to input.value (this will not execute HTML)
+            document.getElementById("login-username").value = savedUser;
+            document.getElementById("remember").checked = true;
+        }
+    } catch (ex) {
+        // ignore storage access errors
     }
-    console.log("LocalStorage:", localStorage); // để test trong F12 console
-}
+});
 </script>
 
 </body>

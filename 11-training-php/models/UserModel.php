@@ -5,96 +5,63 @@ require_once 'BaseModel.php';
 class UserModel extends BaseModel {
 
     public function findUserById($id) {
-        $sql = 'SELECT * FROM users WHERE id = '.$id;
-        $user = $this->select($sql);
-
-        return $user;
+        $sql = "SELECT * FROM users WHERE id = ?";
+        return $this->prepareAndFetch($sql, 'i', [$id]);
     }
 
     public function findUser($keyword) {
-        $sql = 'SELECT * FROM users WHERE user_name LIKE %'.$keyword.'%'. ' OR user_email LIKE %'.$keyword.'%';
-        $user = $this->select($sql);
-
-        return $user;
+        $kw = "%$keyword%";
+        $sql = "SELECT * FROM users WHERE user_name LIKE ? OR user_email LIKE ?";
+        return $this->prepareAndFetch($sql, 'ss', [$kw, $kw]);
     }
 
-    /**
-     * Authentication user
-     * @param $userName
-     * @param $password
-     * @return array
-     */
     public function auth($userName, $password) {
-        $md5Password = md5($password);
-        $sql = 'SELECT * FROM users WHERE name = "' . $userName . '" AND password = "'.$md5Password.'"';
-
-        $user = $this->select($sql);
-        return $user;
-    }
-
-    /**
-     * Delete user by id
-     * @param $id
-     * @return mixed
-     */
-    public function deleteUserById($id) {
-        $sql = 'DELETE FROM users WHERE id = '.$id;
-        return $this->delete($sql);
-
-    }
-
-    /**
-     * Update user
-     * @param $input
-     * @return mixed
-     */
-    public function updateUser($input) {
-        $sql = 'UPDATE users SET 
-                 name = "' . mysqli_real_escape_string(self::$_connection, $input['name']) .'", 
-                 password="'. md5($input['password']) .'"
-                WHERE id = ' . $input['id'];
-
-        $user = $this->update($sql);
-
-        return $user;
-    }
-
-    /**
-     * Insert user
-     * @param $input
-     * @return mixed
-     */
-    public function insertUser($input) {
-        $sql = "INSERT INTO `app_web1`.`users` (`name`, `password`) VALUES (" .
-                "'" . $input['name'] . "', '".md5($input['password'])."')";
-
-        $user = $this->insert($sql);
-
-        return $user;
-    }
-
-    /**
-     * Search users
-     * @param array $params
-     * @return array
-     */
-    public function getUsers($params = []) {
-        //Keyword
-        if (!empty($params['keyword'])) {
-            $sql = 'SELECT * FROM users WHERE name LIKE "%' . $params['keyword'] .'%"';
-
-            //Keep this line to use Sql Injection
-            //Don't change
-            //Example keyword: abcef%";TRUNCATE banks;##
-            $users = self::$_connection->multi_query($sql);
-
-            //Get data
-            $users = $this->query($sql);
-        } else {
-            $sql = 'SELECT * FROM users';
-            $users = $this->select($sql);
+        $sql = "SELECT * FROM users WHERE name = ?";
+        $users = $this->prepareAndFetch($sql, 's', [$userName]);
+        if (!empty($users) && password_verify($password, $users[0]['password'])) {
+            return $users;
         }
+        return [];
+    }
 
-        return $users;
+    public function deleteUserById($id) {
+        $stmt = self::$_connection->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+        return $affected;
+    }
+
+    public function updateUser($input) {
+        $hashed = password_hash($input['password'], PASSWORD_DEFAULT);
+        $stmt = self::$_connection->prepare("UPDATE users SET name = ?, password = ? WHERE id = ?");
+        $stmt->bind_param('ssi', $input['name'], $hashed, $input['id']);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+        return $affected;
+    }
+
+    public function insertUser($input) {
+        $hashed = password_hash($input['password'], PASSWORD_DEFAULT);
+        $stmt = self::$_connection->prepare("INSERT INTO users (name, password) VALUES (?, ?)");
+        $stmt->bind_param('ss', $input['name'], $hashed);
+        $stmt->execute();
+        $insertId = $stmt->insert_id;
+        $stmt->close();
+        return $insertId;
+    }
+
+    public function getUsers($params = []) {
+        if (!empty($params['keyword'])) {
+            $kw = "%".$params['keyword']."%";
+            $sql = "SELECT id, name, fullname, type FROM users WHERE name LIKE ? OR fullname LIKE ?";
+            return $this->prepareAndFetch($sql, 'ss', [$kw, $kw]);
+        } else {
+            return $this->select("SELECT id, name, fullname, type FROM users");
+        }
     }
 }
+
+    
