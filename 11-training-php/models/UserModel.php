@@ -46,10 +46,24 @@ class UserModel extends BaseModel {
      * @return mixed
      */
     public function deleteUserById($id) {
-        $sql = 'DELETE FROM users WHERE id = '.$id;
-        return $this->delete($sql);
-
+        // Ensure integer
+        $id = (int)$id;
+        if ($id <= 0) {
+            return 0;
+        }
+    
+        $stmt = self::$_connection->prepare("DELETE FROM users WHERE id = ? LIMIT 1");
+        if ($stmt === false) {
+            error_log('Prepare failed in deleteUserById: ' . self::$_connection->error);
+            return 0;
+        }
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+        return $affected;
     }
+    
 
     /**
      * Update user
@@ -94,10 +108,7 @@ class UserModel extends BaseModel {
         $users = [];
     
         if (!empty($params['keyword'])) {
-            // Thêm wildcard trước khi bind để an toàn với LIKE
             $keyword = '%' . $params['keyword'] . '%';
-    
-            // Prepare statement (không dùng multi_query)
             $stmt = self::$_connection->prepare("SELECT id, name, fullname, type FROM users WHERE name LIKE ?");
             if ($stmt === false) {
                 error_log('Prepare failed in getUsers: ' . self::$_connection->error);
@@ -135,7 +146,7 @@ class UserModel extends BaseModel {
     //         //Get data
     //         $users = $this->query($sql);
     //     } else {
-    //         $sql = 'SELECT * FROM thu_nghiem';
+    //         $sql = 'SELECT * FROM test_table';
     //         $users = $this->select($sql);
     //     }
 

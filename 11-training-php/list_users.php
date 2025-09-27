@@ -65,7 +65,7 @@ $users = $userModel->getUsers($params);
                     <?php } ?>
                     <!-- <?php foreach ($test as $test) {?>
                         <tr>
-                            <th scope="row"><?php echo $test['ID']?></th>
+                            <th scope="row"><?php echo $test['id']?></th>
                             <td>
                                 <?php echo $test['name']?>
                             </td>
