@@ -1,25 +1,74 @@
 <?php
-// Dùng session mặc định
+// Thiết lập cookie params trước khi session_start()
+// Lưu ý: 'secure' => true chỉ có tác dụng khi site chạy HTTPS
+session_set_cookie_params([
+    'lifetime' => 0,          // hết khi đóng trình duyệt
+    'path' => '/',
+    'domain' => '',           // để mặc định
+    'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', // true nếu HTTPS
+    'httponly' => true,       // JS không thể đọc cookie
+    'samesite' => 'Strict'    // giảm rủi ro CSRF
+]);
+
 session_start();
 
 require_once 'models/UserModel.php';
 $userModel = new UserModel();
 
+// --- Throttle cơ bản: giới hạn 5 lần thử trong 15 phút ---
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = 0;
+    $_SESSION['first_attempt_time'] = time();
+} else {
+    // reset nếu đã qua 15 phút kể từ lần thử đầu
+    if (time() - $_SESSION['first_attempt_time'] > 15 * 60) {
+        $_SESSION['login_attempts'] = 0;
+        $_SESSION['first_attempt_time'] = time();
+    }
+}
+
+$message = '';
 if (!empty($_POST['submit'])) {
-    $users = [
-        'username' => $_POST['username'],
-        'password' => $_POST['password']
-    ];
-    $user = NULL;
-    if ($user = $userModel->auth($users['username'], $users['password'])) {
-        //Login successful
-        $_SESSION['id'] = $user[0]['id'];
-        $_SESSION['message'] = 'Login successful';
-        header('location: list_users.php');
-        exit;
+    // Kiểm tra throttle
+    if ($_SESSION['login_attempts'] >= 5) {
+        $message = 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau 15 phút.';
     } else {
-        //Login failed
-        $_SESSION['message'] = 'Login failed';
+        // Lấy dữ liệu an toàn hơn
+        $username = isset($_POST['username']) ? trim($_POST['username']) : '';
+        $password = isset($_POST['password']) ? $_POST['password'] : '';
+
+        // Validate cơ bản
+        if ($username === '' || $password === '') {
+            $message = 'Vui lòng nhập username và password.';
+            $_SESSION['login_attempts']++;
+        } else {
+            // Gọi hàm auth của model (giả sử model làm chuẩn: prepared statements + password_verify)
+            $user = $userModel->auth($username, $password);
+            if ($user) {
+                // Login thành công -> regenerate session id
+                session_regenerate_id(true);
+
+                // Lưu session an toàn
+                $_SESSION['id'] = $user[0]['id'];
+                $_SESSION['users'] = $user[0]['name'];
+                $_SESSION['message'] = 'Login successful';
+
+                // Ràng buộc session với user agent & IP (IP có thể thay đổi ở NAT/mobile -> cân nhắc)
+                $_SESSION['user_agent'] = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+                $_SESSION['ip'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+                $_SESSION['last_activity'] = time();
+
+                // Reset lại login attempts
+                $_SESSION['login_attempts'] = 0;
+                $_SESSION['first_attempt_time'] = time();
+
+                header('Location: list_users.php');
+                exit;
+            } else {
+                $message = 'Login failed';
+                $_SESSION['login_attempts']++;
+            }
+        }
     }
 }
 ?>
@@ -41,16 +90,19 @@ if (!empty($_POST['submit'])) {
             </div>
 
             <div style="padding-top:30px" class="panel-body" >
-                <form id="login-form" method="post" class="form-horizontal" role="form">
+                <?php if ($message): ?>
+                    <div class="alert alert-danger"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></div>
+                <?php endif; ?>
+                <form id="login-form" method="post" class="form-horizontal" role="form" autocomplete="off">
 
                     <div class="margin-bottom-25 input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
-                        <input id="login-username" type="text" class="form-control" name="username" value="" placeholder="username or email">
+                        <input id="login-username" type="text" class="form-control" name="username" value="" placeholder="username or email" required>
                     </div>
 
                     <div class="margin-bottom-25 input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
-                        <input id="login-password" type="password" class="form-control" name="password" placeholder="password">
+                        <input id="login-password" type="password" class="form-control" name="password" placeholder="password" required>
                     </div>
 
                     <div class="margin-bottom-25">
